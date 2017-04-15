@@ -12,11 +12,13 @@
   "private": true,
   "dependencies": {
     "coffee-script": "^1.12.5",
+    "dedent": "^0.7.0",
     "fs-plus": "^3.0.0",
     "yargs": "^7.1.0"
   },
   "devDependencies": {
     "coffee-script": "^1.12.5",
+    "dedent": "^0.7.0",
     "fs-plus": "^3.0.0",
     "yargs": "^7.1.0"
   }

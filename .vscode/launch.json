@@ -4,6 +4,7 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+        
 {
     "type": "node",
     "request": "launch",
@@ -12,7 +13,7 @@
     "windows": {
         "runtimeExecutable": "E:\\Code Program\\Electron\\electron.exe"
     },
-    "program": "${workspaceRoot}/main.js",
+    "program": "${workspaceRoot}\\src\\main\\main.js",
     "protocol": "legacy"
 },
         {
