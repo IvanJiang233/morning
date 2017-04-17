@@ -23,6 +23,7 @@ module.exports = start = function (args, startTime) {
     // log.outputToFile({time: Date.now(), type: 'message', context: 'Set apphome path successfully'})
     app.on('ready', function () {
         const Application = require(path.join(process.env.MORNING_HOME, 'src', 'main', 'application'))
+        console.log(args)
         Application.open(args)
     })
 }

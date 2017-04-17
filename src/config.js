@@ -3,10 +3,10 @@ const fs = require('fs-plus')
 const path = require('path')
 
 module.exports = class Config {
-    configPath = null
-    appHomePath = null
-    notificationManager = null
-    enablePersistence = null
+    // configPath = null
+    // appHomePath = null
+    // notificationManager = null
+    // enablePersistence = null
 
     constructor({configPath, appHomePath, notificationManager, enablePersistence}) {
         this.configPath = configPath

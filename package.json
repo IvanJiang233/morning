@@ -20,6 +20,7 @@
     "coffee-script": "^1.12.5",
     "dedent": "^0.7.0",
     "fs-plus": "^3.0.0",
+    "underscore-plus": "^1.6.6",
     "yargs": "^7.1.0"
   }
 }
