@@ -1,13 +1,19 @@
 const {app} = require('electron')
-const AppWindow = require('./application-window')
-const AppMenu = require('./application-menu')
+const ApplicationWindow = require('./application-window')
+const ApplicationMenu = require('./application-menu')
+const {CompositeDisposable} = require('event-kit')
 const fs = require('fs-plus')
 const path = require('path')
 const Config = require('../config')
+const {EventEmitter} = require('events')
+const url = require('url')
+const _ = require('underscore-plus')
 
 module.exports = class Application {
     // Applicaion Entry Point
     static open(options) {
+        Object.assign(this.prototype, EventEmitter.prototype)
+
         if (process.platform == 'win32') {
             new Application(options).initialize(options)
             return 
@@ -17,15 +23,17 @@ module.exports = class Application {
     constructor(options) {
         const {appHomePath, pathsToOpen, logFile, userDataPath, urlsToOpen, version} = options
         this.pidsToOpenWindows = {}
-        this.windows = []
+        this.applicationWindows = []
+        this.applicationMenu = null
 
         // new config
-        this.config = new Config({configPath: process.env.MORNING_HOME, appHomePath, enablePersistence: true})
-        this.config.setSchema(null, {type: 'object', properties: _.clone(require('../config-schema'))})
-        this.config.load()
+        // this.config = new Config({configPath: process.env.MORNING_HOME, appHomePath, enablePersistence: true})
+        // this.config.setSchema(null, {type: 'object', properties: _.clone(require('../config-schema'))})
+        // this.config.load()
         //this.fileRecoveryService = new FileRecoveryService(path.join(process.env.MORNING_HOME, 'recovery))
         //this.storageFolder = new StorageFolder(process.env.MORNING_HOME)
 
+        this.compositeDisposable = new CompositeDisposable()
         this.handleEvents()
     }
 
@@ -36,9 +44,9 @@ module.exports = class Application {
     initialize(options) {
         global.application = this
 
-        this.config.onDidChange('core.userCustomTitleBar', this.promptForRestart.bind(this))
+        // this.config.onDidChange('core.userCustomTitleBar', this.promptForRestart.bind(this))
         
-        this.appMenu = new AppMenu()
+        this.applicationMenu = new ApplicationMenu()
         
         this.launch(options)
     }
@@ -48,10 +56,8 @@ module.exports = class Application {
     }
 
     launch(options) {
-        if (options.pathsToOpen != null) {
-            this.openWithOptins(options)
-        } else {
-            this.loadState(options) || this.openPaths(options)
+        if (!options.testMode){
+            this.openWithOptions(options)
         }
     }
 
@@ -60,44 +66,26 @@ module.exports = class Application {
 
         app.focus()
 
-        if (testMode) {
-            this.openPaths
+        if ( options.pathsToOpen == undefined ) {
+            options.pathsToOpen = path.resolve(__dirname, '..', '..', 'static', 'index.html') 
         }
+        this.openPaths(options)
 
-        if (options.pathsToOpen.length > 0) {
-            this.openPaths({
-
-            })
-        } else if (options.urlsToOpen.length > 0) {
-            this.openUrls({
-
-            })
-        } else {
-            this.openPath({
-
+        if ( options.urlsToOpen == undefined ) {
+            options.urlsToOpen = url.format({
+                protocol: 'https',
+                pathname: 'www.baidu.com'
             })
         }
-
-        this.openPaths({
-            appHomePath,
-            pathsToOpen,
-            logPath,
-            userDataPath,
-            urlsToOpen,
-            env
-        })
+        this.openUrls(options)
     }
 
     openPaths(options) {
-        if (pathsToOpen == undefined || pathsToOpen == null || pathsToOpen.length == 0) {
+        // existingWindow = this.windowForPaths(options.pathsToOpen, options.devMode)
+        var existingWindow = false
 
-            return 
-        }
-
-        existingWindow = this.windowForPaths(options.pathsToOpen, options.devMode)
-
-        if (existingWindow !== undefined) {
-            openedWindow = existingWindow
+        if (existingWindow) {
+            var openedWindow = existingWindow
             if (openedWindow.isMinimized()) {
                 openedWindow.restore()
             } else {
@@ -105,7 +93,7 @@ module.exports = class Application {
             }
             openedWindow.replaceEnvironment(env)
         } else {
-            openedWindow = new AppWindow(this, this.fileRecoveryService, {})
+            var openedWindow = new ApplicationWindow(this, this.fileRecoveryService, options)
             openedWindow.focus()
         }
     }
@@ -115,15 +103,15 @@ module.exports = class Application {
     }
 
     addWindow(window) {
-        this.windows.push(window)
-        if (this.appMenu != null) {
-            this.appMenu.addWindow(window.browserWindow)
+        this.applicationWindows.push(window)
+        if (this.applicationMenu != null) {
+            this.applicationMenu.addWindow(window.browserWindow)
         }
 
     }
 
     removeWindow(window) {
-        this.windows.slipce(this.windows.indexOf(window),1)
+        this.applicationWindows.slipce(this.applicationWindows.indexOf(window),1)
         if (this.window.length == 0) {
             // Show special page
             if (process.platform in ['win32', 'linux']) {
@@ -133,7 +121,7 @@ module.exports = class Application {
         }
     }
 
-    handleEvent() {
+    handleEvents() {
         this.on('application:quit', function () { app.quit() })
         this.on('application:new-window', function () { })
         this.on('application:new-file', function () { })
@@ -149,9 +137,15 @@ module.exports = class Application {
             }
         })
 
-        this.openPathOnEvent('applicaiton:show-settings', 'morning://config')
-        this.openPathOnEvent('application:open-your-config', 'morning://')
-        this.openPathOnEvent('application:open-your-keymap', 'morning://')
-        this.openPathOnEvent('application:open-your-stylesheet', 'morning://stylesheet')
+        this.compositeDisposable.add(ipcHelper.on(app, 'open-file', function (event, pathsToOpen) {
+            event.preventDefault()
+            this.openPaths({pathsToOpen})
+        }))
+
+        // this.openPathOnEvent('applicaiton:show-settings', 'morning://config')
+        // this.openPathOnEvent('application:open-your-config', 'morning://')
+        // this.openPathOnEvent('application:open-your-keymap', 'morning://')
+        // this.openPathOnEvent('application:open-your-stylesheet', 'morning://stylesheet')
     }
+
 }

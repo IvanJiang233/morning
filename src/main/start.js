@@ -1,4 +1,4 @@
-const {app} = require('electron')
+const {app,BrowserWindow} = require('electron')
 const path = require('path')
 const parseCommandLine = require('../parse-command-line')
 const setPaths = require('../set-paths')

@@ -1,11 +1,26 @@
 const {app, Menu} = require('electron')
 const _ = require('underscore-plus')
 
-module.exports = class AppMenu {
-    constructor() {
+module.exports = class ApplicationMenu {
+    constructor(autoUpdateManager) {
         // setActiveTemplate
-        this.windowTemplate = new WeakMap()
+        this.windowTemplates = new WeakMap()
         this.setActiveTemplate(this.getDefaultTemplate())
+    }
+
+    update(window, template) {
+        this.translateTemplate()
+        this.windowTemplates.set(window, template)
+        if (window == this.lastFocusedWindow)
+            this.setActiveTemplate(template)
+    }
+
+    setActiveTemplate(template) {
+        if (!_.isEqual(template, this.activeTemplate)) {
+            this.activeTemplate = template
+            this.menu = Menu.buildFromTemplate(_.deepClone(template))
+            Menu.setApplicationMenu(this.menu)
+        }
     }
 
     addWindow(window) {

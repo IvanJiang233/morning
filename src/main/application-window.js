@@ -3,31 +3,37 @@ const fs = require('fs-plus')
 const path = require('path')
 const {EventEmitter} = require('events')
 
-module.exports = class applWindow {
+module.exports = class ApplicationWindow {
     // iconPath = path.resolve(__dirname, '..', '..', 'resources', 'icon.png')
     // browserWindow = null
 
     constructor(application, settings = {}) { 
         this.application = application
-        const {appHomePath, pathToOpen} = settings
+        this.settings = settings
+        this.browserWindow = null
+        // const {appHomePath, pathToOpen} = settings
 
-        options = {
-            show: false,
+        const options = {
+            show: true,
             title: 'Morning',
             backgroundColor: "#fff",
+            width: 800,
+            height: 600
         }
 
         this.browserWindow = new BrowserWindow(options)
-        this.application.addWindow(this)
+        this.browserWindow.loadURL('https://www.google.com.hk')
+
+        // this.application.addWindow(this)
 
         this.handleEvents()
 
-        loadSettings.appHome = process.env.MORNING_HOME
+        // loadSettings.appHome = process.env.MORNING_HOME
         
         
-        this.browserWindow.on('window:loaded' , function () {
+        // this.browserWindow.on('window:loaded' , function () {
 
-        })
+        // })
     }
 
     handleEvents() {
@@ -37,6 +43,16 @@ module.exports = class applWindow {
 
         this.browserWindow.on('closed', function () {
 
+        })
+        
+        this.setupContextMenu()
+    }
+
+    setupContextMenu() {
+        ContextMenu = require('./context-menu')
+
+        this.browserWindow.on('context-menu', function (menuTemplate) {
+            new ContextMenu(menuTemplate, this)
         })
     }
 
